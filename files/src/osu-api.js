@@ -64,6 +64,26 @@ export async function getUserPendingBeatmapsets(userId, limit = 10) {
   return getUserBeatmapsets(userId, 'pending', limit);
 }
 
+export async function getOsuUser(userId) {
+  const token = await getOsuAccessToken();
+  const response = await fetch(
+    `${OSU_API_BASE_URL}/users/${encodeURIComponent(userId)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Failed to get osu! user ${userId}: ${response.status} ${body}`);
+  }
+
+  return response.json();
+}
+
 export async function getUserLatestPendingBeatmapset(userId) {
   const [pending, graveyard] = await Promise.all([
     getUserBeatmapsets(userId, 'pending', 10),

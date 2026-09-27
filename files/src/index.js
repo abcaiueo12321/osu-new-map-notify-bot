@@ -3,7 +3,7 @@ import { Client, EmbedBuilder, Events, GatewayIntentBits } from 'discord.js';
 import { fileURLToPath } from 'node:url';
 import { getPollIntervalMs } from './config.js';
 import { checkOsuUploads, initializeSeenBeatmapsets } from './osu-monitor.js';
-import { getUserLatestPendingBeatmapset } from './osu-api.js';
+import { getOsuUser, getUserLatestPendingBeatmapset } from './osu-api.js';
 import {
   addWatchedUserId,
   loadWatchedUserIds,
@@ -156,9 +156,24 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     if (subcommand === 'list') {
       const userIds = await loadWatchedUserIds();
-      await interaction.reply(userIds.length > 0
-        ? `監視中のosu!ユーザー:\n${userIds.map((id) => `- ${id}`).join('\n')}`
-        : '監視中のosu!ユーザーはいません。');
+      if (userIds.length === 0) {
+        await interaction.reply('監視中のosu!ユーザーはいません。');
+        return;
+      }
+
+      await interaction.deferReply();
+
+      const userLines = await Promise.all(userIds.map(async (id) => {
+        try {
+          const user = await getOsuUser(id);
+          return `- [${user.username}](https://osu.ppy.sh/users/${id}) (${id})`;
+        } catch (error) {
+          console.error(`Failed to fetch osu! user ${id}:`, error);
+          return `- 不明なユーザー (${id})`;
+        }
+      }));
+
+      await interaction.editReply(`監視中のosu!ユーザー:\n${userLines.join('\n')}`);
       return;
     }
 
