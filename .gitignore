@@ -1,0 +1,13 @@
+.env
+*
+!.gitignore
+!files/
+!files/**
+files/node_modules/
+files/node_modules-old/
+files/.pnpm-store/
+files/data/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
