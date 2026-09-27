@@ -27,6 +27,26 @@ const commands = [
       .setName('user')
       .setDescription('osu! user ID or username')
       .setRequired(true)),
+  new SlashCommandBuilder()
+    .setName('watch')
+    .setDescription('Manage osu! users to monitor.')
+    .addSubcommand((subcommand) => subcommand
+      .setName('add')
+      .setDescription('Add an osu! user to the watch list.')
+      .addStringOption((option) => option
+        .setName('user_id')
+        .setDescription('osu! user ID')
+        .setRequired(true)))
+    .addSubcommand((subcommand) => subcommand
+      .setName('remove')
+      .setDescription('Remove an osu! user from the watch list.')
+      .addStringOption((option) => option
+        .setName('user_id')
+        .setDescription('osu! user ID')
+        .setRequired(true)))
+    .addSubcommand((subcommand) => subcommand
+      .setName('list')
+      .setDescription('Show the current watch list.')),
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(token);

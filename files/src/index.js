@@ -4,6 +4,12 @@ import { fileURLToPath } from 'node:url';
 import { getPollIntervalMs } from './config.js';
 import { checkOsuUploads, initializeSeenBeatmapsets } from './osu-monitor.js';
 import { getUserLatestPendingBeatmapset } from './osu-api.js';
+import {
+  addWatchedUserId,
+  loadWatchedUserIds,
+  removeWatchedUserId,
+  validateWatchedUserId,
+} from './watch-store.js';
 
 dotenv.config({ path: fileURLToPath(new URL('../../.env', import.meta.url)) });
 
@@ -47,7 +53,7 @@ client.once(Events.ClientReady, async (readyClient) => {
     return;
   }
 
-  console.log(`osu! monitor started for ${process.env.OSU_USER_IDS}`);
+  console.log(`osu! monitor started for ${(await loadWatchedUserIds()).join(',')}`);
 
   const runCheck = async () => {
     try {
@@ -143,6 +149,41 @@ client.on(Events.InteractionCreate, async (interaction) => {
       console.error(`Failed to fetch latest beatmapset for ${userInput}:`, error);
       await interaction.editReply('osu!からbeatmap情報を取得できませんでした。User IDまたはユーザー名を確認してください。');
     }
+  }
+
+  if (interaction.commandName === 'watch') {
+    const subcommand = interaction.options.getSubcommand();
+
+    if (subcommand === 'list') {
+      const userIds = await loadWatchedUserIds();
+      await interaction.reply(userIds.length > 0
+        ? `監視中のosu!ユーザー:\n${userIds.map((id) => `- ${id}`).join('\n')}`
+        : '監視中のosu!ユーザーはいません。');
+      return;
+    }
+
+    const userId = interaction.options.getString('user_id', true).trim();
+
+    if (!validateWatchedUserId(userId)) {
+      await interaction.reply({
+        content: 'osu! User IDは正の数字で指定してください。',
+        ephemeral: true,
+      });
+      return;
+    }
+
+    if (subcommand === 'add') {
+      const result = await addWatchedUserId(userId);
+      await interaction.reply(result.added
+        ? `osu! User ID ${userId} を監視リストに追加しました。`
+        : `osu! User ID ${userId} はすでに監視リストにあります。`);
+      return;
+    }
+
+    const result = await removeWatchedUserId(userId);
+    await interaction.reply(result.removed
+      ? `osu! User ID ${userId} を監視リストから削除しました。`
+      : `osu! User ID ${userId} は監視リストにありません。`);
   }
 });
 

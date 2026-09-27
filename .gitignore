@@ -3,8 +3,7 @@
 !.gitignore
 !files/
 !files/**
-files/node_modules/
-files/node_modules-old/
+files/node_modules*/
 files/.pnpm-store/
 files/data/
 npm-debug.log*

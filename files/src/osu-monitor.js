@@ -1,7 +1,8 @@
 import { EmbedBuilder } from 'discord.js';
-import { parseOsuUserIds, requireEnv } from './config.js';
+import { requireEnv } from './config.js';
 import { getUserPendingBeatmapsets } from './osu-api.js';
 import { loadSeenBeatmapsets, saveSeenBeatmapsets } from './seen-store.js';
+import { loadWatchedUserIds } from './watch-store.js';
 
 function formatBeatmapsetUrl(beatmapsetId) {
   return `https://osu.ppy.sh/beatmapsets/${beatmapsetId}`;
@@ -24,7 +25,7 @@ function createBeatmapsetEmbed(beatmapset, userId) {
 
 export async function checkOsuUploads(client, seenBeatmapsetIds) {
   const channelId = requireEnv('DISCORD_NOTIFY_CHANNEL_ID');
-  const userIds = parseOsuUserIds(requireEnv('OSU_USER_IDS'));
+  const userIds = await loadWatchedUserIds();
 
   if (userIds.length === 0) {
     throw new Error('OSU_USER_IDS must contain at least one user id');
@@ -73,7 +74,7 @@ export async function initializeSeenBeatmapsets() {
     return seenBeatmapsetIds;
   }
 
-  const userIds = parseOsuUserIds(requireEnv('OSU_USER_IDS'));
+  const userIds = await loadWatchedUserIds();
 
   for (const userId of userIds) {
     const beatmapsets = await getUserPendingBeatmapsets(userId);
